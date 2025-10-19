@@ -5,7 +5,7 @@ import numpy as np
 
 
 
-class SGDClassifier:
+class SGDClassifier3:
     def __init__(self, learning_rate=0.01, alpha=1e-4, n_iterations=1000,
                  optimizer=Momentum(), loss=LogLoss(), weight_init='random',
                  penalty=None, lambd=0.5, ordering='random', use_bias=True):
@@ -39,11 +39,10 @@ class SGDClassifier:
                     w = np.append(w, 0.0)
                 self.weights = w
             case 'multi':
-                a = [SGDClassifier(learning_rate=self.learning_rate, alpha=self.alpha,
+                a = [SGDClassifier3(learning_rate=self.learning_rate, alpha=self.alpha,
                                     n_iterations=5, optimizer=self.optimizer, loss=self.loss,
                                     weight_init='random', penalty=self.penalty, use_bias=self.use_bias) for _ in range(10)]
-                X_ = X[:, :-1]
-                _ = [i.fit(X_, y) for i in a]
+                _ = [i.fit(X, y) for i in a]
                 best = min(a, key=lambda model: model.Q)
                 self.weights = best.weights
                 print(self.weights.shape)
@@ -57,6 +56,7 @@ class SGDClassifier:
 
         print(X.shape)
 
+        # Начальный Q по всей выборке
         self.Q = self.loss.loss(y * (X @ self.weights)).mean()
 
         for iter in range(self.n_iterations):

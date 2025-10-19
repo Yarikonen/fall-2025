@@ -5,7 +5,7 @@ import numpy as np
 
 
 
-class SGDClassifier:
+class SGDClassifier3:
     def __init__(self, learning_rate=0.01, alpha=1e-4, n_iterations=1000,
                  optimizer=Momentum(), loss=LogLoss(), weight_init='random',
                  penalty=None, lambd=0.5, ordering='random', use_bias=True):
@@ -33,20 +33,19 @@ class SGDClassifier:
                 if self.use_bias:
                     self.weights[-1] = 0.0 
             case 'correlation':
-            
+                # Корреляционная инициализация для признаков;
+                # для bias задать 0 (последний элемент)
                 w = np.array([np.dot(X[:, i], y) / np.dot(X[:, i], X[:, i]) for i in range(n_features - (1 if self.use_bias else 0))])
                 if self.use_bias:
                     w = np.append(w, 0.0)
                 self.weights = w
             case 'multi':
-                a = [SGDClassifier(learning_rate=self.learning_rate, alpha=self.alpha,
+                a = [SGDClassifier2(learning_rate=self.learning_rate, alpha=self.alpha,
                                     n_iterations=5, optimizer=self.optimizer, loss=self.loss,
                                     weight_init='random', penalty=self.penalty, use_bias=self.use_bias) for _ in range(10)]
-                X_ = X[:, :-1]
-                _ = [i.fit(X_, y) for i in a]
+                _ = [i.fit(X, y) for i in a]
                 best = min(a, key=lambda model: model.Q)
                 self.weights = best.weights
-                print(self.weights.shape)
 
     def fit(self, X, y):
        
@@ -55,8 +54,7 @@ class SGDClassifier:
         n_samples, n_features = X.shape
         self._initialize_weights(n_features, y, X)
 
-        print(X.shape)
-
+        # Начальный Q по всей выборке
         self.Q = self.loss.loss(y * (X @ self.weights)).mean()
 
         for iter in range(self.n_iterations):
@@ -64,7 +62,7 @@ class SGDClassifier:
                 case 'random':
                     shuffle_indices = np.random.permutation(n_samples)
                 case 'margin-first':
-                    margin=np.abs(y * (X @ self.weights))
+                    margin = y * (X @ self.weights)
                     shuffle_indices = (margin).argsort()
                     print()
 
