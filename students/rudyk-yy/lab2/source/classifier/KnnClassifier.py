@@ -14,14 +14,16 @@ class KnnClassifier:
     
     def _kernel(self, distance, h):
         if self.kernel == "gaussian":
-            return np.exp(-2*(distance/h)**2)
+            # Гауссово ядро (классическое, без нормировки)
+            return np.exp(-0.5 * (distance / h) ** 2)
+
         elif self.kernel == "epanechnikov":
-            if abs(distance) <= h:
-                return 0.75 * (1 - (distance / h) ** 2) / h
-            else:
-                return 0
+            u = distance / h
+            return 0.75 * (1 - u ** 2) if abs(u) <= 1 else 0.0
+
         else:
-            raise ValueError("Unsupported kernel type.")
+            raise ValueError(f"Unsupported kernel type: {self.kernel}")
+
     
     def fit(self, X, y):
         self.X_train = X
@@ -41,20 +43,19 @@ class KnnClassifier:
             y_pred = []
             for i in range(n):
                 neighbor_idx = sorted_indices[i][1:]  # Exclude the point itself
-                h = distances[i][neighbor_idx[k-1]]# расстояние до k-го соседа
+                h = distances[i][neighbor_idx[k+1]]# расстояние до k+1-го соседа
                 
                 weights = self._weights(distances[i], h, neighbor_idx)
 
                 votes = np.zeros(len(np.unique(y)))
-                print(len(y))
                 
                 for idx, cls in enumerate(np.unique(y)):
                     votes[idx] = weights[y[neighbor_idx] == cls].sum()
-                print(votes)
                 y_pred.append(np.unique(y)[np.argmax(votes)])
             
             y_pred = np.array(y_pred)
             accuracy = np.sum(y_pred == y) / n
+            print(accuracy)
             
             if k == 1 or accuracy > self.best_accuracy:
                 self.best_accuracy = accuracy
